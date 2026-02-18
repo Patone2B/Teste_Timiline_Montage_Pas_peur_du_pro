@@ -605,3 +605,273 @@ function init(){
   els.timelineWrap.focus();
 }
 init();
+(() => {
+  // ====== Config "simple & pro" ======
+  const BASE_PX_PER_SEC = 80;         // densité standard
+  const MIN_TIMELINE_SEC = 30;        // minimum affiché
+  const MAX_TIMELINE_SEC = 20 * 60;   // 20 min max (évite "11 km")
+  const SNAP_SEC = 0.1;               // snapping 100ms
+
+  // ====== DOM ======
+  const dropZone = document.getElementById("dropZone");
+  const btnImport = document.getElementById("btnImport");
+  const filePicker = document.getElementById("filePicker");
+  const zoomSlider = document.getElementById("zoomSlider");
+  const timeInfo = document.getElementById("timeInfo");
+
+  const viewport = document.getElementById("timelineViewport");
+  const content = document.getElementById("timelineContent");
+  const ruler = document.getElementById("ruler");
+  const laneVideo = document.getElementById("laneVideo");
+  const laneAudio = document.getElementById("laneAudio");
+
+  // ====== State ======
+  let zoom = Number(zoomSlider.value);
+  /** clips: {id, kind:'video'|'audio', name, url, duration, start, track} */
+  let clips = [];
+  let timelineSec = MIN_TIMELINE_SEC;
+
+  // ====== Helpers ======
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const pxPerSec = () => BASE_PX_PER_SEC * zoom;
+  const secToPx = (s) => s * pxPerSec();
+  const pxToSec = (px) => px / pxPerSec();
+  const snap = (sec) => Math.round(sec / SNAP_SEC) * SNAP_SEC;
+
+  function updateTimelineLength() {
+    // timelineSec = max(fin de clips, min) bornée pour ne pas exploser
+    const end = clips.reduce((m, c) => Math.max(m, c.start + c.duration), 0);
+    timelineSec = clamp(Math.ceil(end + 5), MIN_TIMELINE_SEC, MAX_TIMELINE_SEC);
+    content.style.width = `${Math.max(900, secToPx(timelineSec) + 120)}px`;
+    drawRuler();
+    updateTimeInfo();
+  }
+
+  function updateTimeInfo() {
+    timeInfo.textContent = `Durée: ${formatTime(timelineSec)} | Clips: ${clips.length}`;
+  }
+
+  function formatTime(sec) {
+    const s = Math.max(0, Math.floor(sec));
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return m > 0 ? `${m}m ${String(r).padStart(2, "0")}s` : `${r}s`;
+  }
+
+  function drawRuler() {
+    const pps = pxPerSec();
+    ruler.innerHTML = "";
+
+    // ticks: 1s / 5s / 10s selon zoom
+    let majorEvery = 5;
+    if (pps < 60) majorEvery = 10;
+    if (pps > 140) majorEvery = 2;
+
+    const totalPx = secToPx(timelineSec);
+    ruler.style.width = `${Math.max(900, totalPx + 120)}px`;
+
+    const frag = document.createDocumentFragment();
+
+    for (let s = 0; s <= timelineSec; s++) {
+      const x = secToPx(s);
+
+      // tick
+      const tick = document.createElement("div");
+      tick.style.position = "absolute";
+      tick.style.left = `${x}px`;
+      tick.style.top = "0";
+      tick.style.bottom = "0";
+      tick.style.width = "1px";
+
+      const isMajor = (s % majorEvery === 0);
+      tick.style.background = isMajor ? "rgba(255,255,255,.35)" : "rgba(255,255,255,.14)";
+
+      if (isMajor) {
+        const label = document.createElement("div");
+        label.textContent = s >= 60 ? `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}` : `${s}s`;
+        label.style.position = "absolute";
+        label.style.left = `${x + 6}px`;
+        label.style.top = "6px";
+        label.style.fontSize = "12px";
+        label.style.opacity = ".85";
+        frag.appendChild(label);
+      }
+
+      frag.appendChild(tick);
+    }
+
+    ruler.style.position = "relative";
+    ruler.appendChild(frag);
+  }
+
+  function render() {
+    laneVideo.innerHTML = "";
+    laneAudio.innerHTML = "";
+
+    for (const c of clips) {
+      const el = document.createElement("div");
+      el.className = "tl__clip";
+      el.dataset.id = c.id;
+      el.dataset.kind = c.kind;
+
+      el.style.left = `${secToPx(c.start)}px`;
+      el.style.width = `${Math.max(60, secToPx(c.duration))}px`;
+
+      const title = document.createElement("div");
+      title.className = "tl__clipTitle";
+      title.textContent = c.name;
+
+      const meta = document.createElement("div");
+      meta.className = "tl__clipMeta";
+      meta.textContent = formatTime(c.duration);
+
+      el.appendChild(title);
+      el.appendChild(meta);
+
+      // drag clip within lane
+      enableClipDrag(el, c);
+
+      (c.track === "video" ? laneVideo : laneAudio).appendChild(el);
+    }
+  }
+
+  function enableClipDrag(el, clip) {
+    let dragging = false;
+    let startX = 0;
+    let origStart = 0;
+
+    el.addEventListener("pointerdown", (e) => {
+      dragging = true;
+      el.setPointerCapture(e.pointerId);
+      startX = e.clientX;
+      origStart = clip.start;
+    });
+
+    el.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - startX;
+
+      const newStart = snap(clamp(origStart + pxToSec(dx), 0, timelineSec - clip.duration));
+      clip.start = newStart;
+
+      el.style.left = `${secToPx(clip.start)}px`;
+
+      // auto-scroll si on approche des bords du viewport
+      const rect = viewport.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const edge = 60;
+      if (mx > rect.width - edge) viewport.scrollLeft += 12;
+      if (mx < edge) viewport.scrollLeft -= 12;
+
+      updateTimelineLength();
+    });
+
+    el.addEventListener("pointerup", () => {
+      dragging = false;
+      updateTimelineLength();
+      render();
+    });
+  }
+
+  // ====== Import local files ======
+  function isVideo(file) { return file.type.startsWith("video/"); }
+  function isAudio(file) { return file.type.startsWith("audio/"); }
+
+  async function fileToClip(file) {
+    const kind = isVideo(file) ? "video" : "audio";
+    const url = URL.createObjectURL(file);
+    const duration = await readMediaDuration(url, kind);
+
+    return {
+      id: crypto.randomUUID(),
+      kind,
+      name: file.name,
+      url,
+      duration: clamp(duration || 3, 0.5, MAX_TIMELINE_SEC),
+      start: findNextFreeStart(kind),
+      track: kind // piste = kind
+    };
+  }
+
+  function findNextFreeStart(kind) {
+    // place à la fin sur sa piste
+    const same = clips.filter(c => c.track === kind);
+    const end = same.reduce((m, c) => Math.max(m, c.start + c.duration), 0);
+    return snap(clamp(end, 0, MAX_TIMELINE_SEC - 1));
+  }
+
+  function readMediaDuration(url, kind) {
+    return new Promise((resolve) => {
+      const el = document.createElement(kind === "video" ? "video" : "audio");
+      el.preload = "metadata";
+      el.src = url;
+
+      const done = (d) => {
+        el.removeAttribute("src");
+        el.load();
+        resolve(d);
+      };
+
+      el.onloadedmetadata = () => done(el.duration);
+      el.onerror = () => done(3); // fallback
+    });
+  }
+
+  async function addFiles(fileList) {
+    const files = [...fileList].filter(f => isVideo(f) || isAudio(f));
+    if (!files.length) return;
+
+    for (const f of files) {
+      const clip = await fileToClip(f);
+      clips.push(clip);
+    }
+    updateTimelineLength();
+    render();
+  }
+
+  // ====== Dropzone events ======
+  ["dragenter", "dragover"].forEach(evt => {
+    dropZone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      dropZone.classList.add("isOver");
+    });
+  });
+
+  ["dragleave", "drop"].forEach(evt => {
+    dropZone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      dropZone.classList.remove("isOver");
+    });
+  });
+
+  dropZone.addEventListener("drop", async (e) => {
+    await addFiles(e.dataTransfer.files);
+  });
+
+  // ====== Import button ======
+  btnImport.addEventListener("click", () => filePicker.click());
+  filePicker.addEventListener("change", async () => {
+    await addFiles(filePicker.files);
+    filePicker.value = "";
+  });
+
+  // ====== Zoom ======
+  zoomSlider.addEventListener("input", () => {
+    // garder le point visuel (scroll) à peu près stable
+    const oldPps = pxPerSec();
+    zoom = Number(zoomSlider.value);
+    const newPps = pxPerSec();
+
+    const center = viewport.scrollLeft + viewport.clientWidth / 2;
+    const centerSec = center / oldPps;
+
+    updateTimelineLength();
+    render();
+
+    viewport.scrollLeft = Math.max(0, centerSec * newPps - viewport.clientWidth / 2);
+  });
+
+  // ====== Init ======
+  updateTimelineLength();
+  render();
+})();
