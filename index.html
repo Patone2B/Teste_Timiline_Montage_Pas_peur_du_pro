@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Timeline Montage — Mini éditeur</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">⏱️</div>
+      <div>
+        <div class="title">Timeline Montage (démo)</div>
+        <div class="subtitle">Plans intégrés + son (WebAudio) + scrub</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="btnPlay" class="btn primary" type="button">▶︎ Play</button>
+      <button id="btnStop" class="btn" type="button">⏹ Stop</button>
+
+      <div class="timebox">
+        <div class="time-label">Temps</div>
+        <div id="timeReadout" class="time-value">00:00.0 / 00:00.0</div>
+      </div>
+
+      <label class="checkbox">
+        <input id="toggleTicks" type="checkbox" checked />
+        <span>Tic chaque seconde</span>
+      </label>
+
+      <label class="checkbox">
+        <input id="toggleClipBeep" type="checkbox" checked />
+        <span>Bip début de plan</span>
+      </label>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="preview">
+      <div class="panel-title">Aperçu</div>
+      <canvas id="previewCanvas" width="1280" height="720"></canvas>
+      <div class="preview-meta">
+        <div class="meta-pill" id="clipName">—</div>
+        <div class="meta-pill" id="clipInfo">—</div>
+      </div>
+    </section>
+
+    <section class="timeline">
+      <div class="panel-title">Timeline</div>
+
+      <div class="timeline-toolbar">
+        <div class="zoom">
+          <span>Zoom</span>
+          <input id="zoom" type="range" min="50" max="250" value="120" />
+        </div>
+
+        <div class="hint">
+          Clique/Glisse sur la règle ou dans la track pour déplacer la tête de lecture.
+        </div>
+      </div>
+
+      <div id="timelineWrap" class="timeline-wrap" tabindex="0" aria-label="Timeline">
+        <div id="ruler" class="ruler"></div>
+
+        <div class="tracks">
+          <div class="track-label">V1</div>
+          <div id="trackV1" class="track"></div>
+        </div>
+
+        <div class="tracks">
+          <div class="track-label">A1</div>
+          <div class="track audio">
+            <div class="audio-lane">
+              <div class="audio-wave"></div>
+              <div class="audio-wave"></div>
+              <div class="audio-wave"></div>
+              <div class="audio-wave"></div>
+              <div class="audio-wave"></div>
+              <div class="audio-wave"></div>
+            </div>
+            <div class="audio-note">Son généré (WebAudio) pendant la lecture</div>
+          </div>
+        </div>
+
+        <div id="playhead" class="playhead" aria-hidden="true">
+          <div class="playhead-top"></div>
+          <div class="playhead-line"></div>
+        </div>
+      </div>
+
+      <footer class="footer">
+        <div class="small">
+          Astuce : espace = play/pause • stop = remet à 0 • le son se débloque après un clic utilisateur.
+        </div>
+      </footer>
+    </section>
+  </main>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
