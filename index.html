@@ -97,6 +97,46 @@
       </footer>
     </section>
   </main>
+<section class="tl">
+  <header class="tl__bar">
+    <div class="tl__left">
+      <button class="tl__btn" id="btnImport">Importer</button>
+      <input id="filePicker" type="file" accept="video/*,audio/*" multiple hidden />
+      <span class="tl__hint">Glisse-dépose des fichiers ici ou importe.</span>
+    </div>
+
+    <div class="tl__right">
+      <label class="tl__zoom">
+        Zoom
+        <input id="zoomSlider" type="range" min="0.5" max="3" step="0.1" value="1" />
+      </label>
+      <span class="tl__time" id="timeInfo">—</span>
+    </div>
+  </header>
+
+  <!-- Zone drop fichiers -->
+  <div class="tl__drop" id="dropZone">
+    <div class="tl__viewport" id="timelineViewport">
+      <div class="tl__content" id="timelineContent">
+        <!-- Règle -->
+        <div class="tl__ruler" id="ruler"></div>
+
+        <!-- Pistes -->
+        <div class="tl__tracks">
+          <div class="tl__track" data-track="video">
+            <div class="tl__trackLabel">VIDÉO</div>
+            <div class="tl__lane" id="laneVideo"></div>
+          </div>
+
+          <div class="tl__track" data-track="audio">
+            <div class="tl__trackLabel">AUDIO</div>
+            <div class="tl__lane" id="laneAudio"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
   <script src="app.js" defer></script>
 </body>
