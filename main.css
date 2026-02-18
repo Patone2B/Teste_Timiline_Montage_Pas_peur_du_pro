@@ -389,3 +389,146 @@ body{
 @media (max-width: 1050px){
   .layout{ grid-template-columns: 1fr; }
 }
+/* ===== Timeline (pro & simple) ===== */
+.tl{
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(0,0,0,.35);
+  backdrop-filter: blur(8px);
+}
+
+.tl__bar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  padding:12px 14px;
+  border-bottom: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.25);
+}
+
+.tl__left{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.tl__right{ display:flex; align-items:center; gap:14px; }
+
+.tl__btn{
+  padding:8px 12px;
+  border-radius: 10px;
+  border:1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.06);
+  color: #fff;
+  cursor:pointer;
+}
+.tl__btn:hover{ background: rgba(255,255,255,.10); }
+
+.tl__hint{ opacity:.75; font-size: 13px; }
+.tl__zoom{ display:flex; align-items:center; gap:8px; font-size: 13px; opacity:.9; }
+.tl__zoom input{ width: 160px; }
+.tl__time{ font-size: 13px; opacity:.8; min-width: 120px; text-align:right; }
+
+.tl__drop{
+  position: relative;
+}
+.tl__drop.isOver{
+  outline: 2px dashed rgba(255,255,255,.35);
+  outline-offset: -6px;
+  background: rgba(255,255,255,.03);
+}
+
+/* Viewport = limite visuelle + scroll horizontal */
+.tl__viewport{
+  height: 220px;
+  overflow: auto;         /* SCROLL horizontal/vertical si besoin */
+  overscroll-behavior: contain;
+}
+
+/* content = largeur virtuelle de la timeline (contrôlée par JS) */
+.tl__content{
+  position: relative;
+  min-width: 900px;
+  padding: 10px 10px 14px 10px;
+}
+
+/* Règle (timeline ruler) */
+.tl__ruler{
+  position: sticky;
+  top: 0;
+  height: 28px;
+  z-index: 5;
+  background: linear-gradient(to bottom, rgba(0,0,0,.55), rgba(0,0,0,.15));
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.10);
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+/* Tracks */
+.tl__tracks{
+  display: grid;
+  gap: 10px;
+}
+
+.tl__track{
+  display:grid;
+  grid-template-columns: 78px 1fr;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.tl__trackLabel{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing:.08em;
+  opacity:.75;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 10px;
+  background: rgba(255,255,255,.04);
+}
+
+.tl__lane{
+  position: relative;
+  height: 72px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 12px;
+  background: rgba(255,255,255,.03);
+  overflow: hidden;
+}
+
+/* Clip */
+.tl__clip{
+  position:absolute;
+  top: 10px;
+  height: 52px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.08);
+  display:flex;
+  align-items:center;
+  padding: 0 10px;
+  cursor: grab;
+  user-select:none;
+  box-shadow: 0 8px 20px rgba(0,0,0,.25);
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow: ellipsis;
+}
+
+.tl__clip:active{ cursor: grabbing; }
+.tl__clip[data-kind="video"]{ background: rgba(90,160,255,.18); }
+.tl__clip[data-kind="audio"]{ background: rgba(255,170,90,.16); }
+
+.tl__clipTitle{
+  font-size: 13px;
+  opacity: .95;
+  max-width: 100%;
+}
+
+.tl__clipMeta{
+  margin-left:auto;
+  font-size: 12px;
+  opacity: .7;
+  padding-left: 10px;
+}
