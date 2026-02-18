@@ -5,8 +5,11 @@
   --text:#e8ecff;
   --muted:#a7b0d8;
   --line:rgba(255,255,255,.12);
+  --line2:rgba(255,255,255,.08);
   --shadow: 0 20px 60px rgba(0,0,0,.45);
   --radius:16px;
+  --accent: rgba(255,255,255,.92);
+  --danger: rgba(255,120,120,.95);
 }
 
 *{ box-sizing:border-box; }
@@ -34,11 +37,7 @@ body{
   border-bottom:1px solid var(--line);
 }
 
-.brand{
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
+.brand{ display:flex; align-items:center; gap:12px; }
 .logo{
   width:42px; height:42px;
   display:grid; place-items:center;
@@ -65,6 +64,7 @@ body{
   border-radius:12px;
   cursor:pointer;
   box-shadow: 0 8px 18px rgba(0,0,0,.25);
+  user-select:none;
 }
 .btn:hover{ background: rgba(255,255,255,.10); }
 .btn:active{ transform: translateY(1px); }
@@ -96,6 +96,7 @@ body{
   background: rgba(255,255,255,.04);
   font-size:13px;
   color:var(--muted);
+  user-select:none;
 }
 
 .layout{
@@ -151,7 +152,9 @@ body{
   justify-content:space-between;
   gap:10px;
   margin-bottom:10px;
+  flex-wrap:wrap;
 }
+
 .zoom{
   display:flex;
   align-items:center;
@@ -162,6 +165,18 @@ body{
 .zoom input{ width:160px; }
 .hint{ color:var(--muted); font-size:12px; }
 
+.transition-ui{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.ms{
+  color: var(--muted);
+  font-size:12px;
+  font-variant-numeric: tabular-nums;
+}
+
 .timeline-wrap{
   position:relative;
   border-radius:14px;
@@ -170,6 +185,12 @@ body{
   overflow:auto;
   padding-bottom: 12px;
   outline:none;
+
+  /* grille style timeline */
+  background-image:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0, rgba(255,255,255,.06) 1px, transparent 1px, transparent 60px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.10) 0, rgba(255,255,255,.10) 1px, transparent 1px, transparent 300px);
+  background-position: 0 34px;
 }
 
 .ruler{
@@ -187,6 +208,7 @@ body{
   gap:10px;
   padding:12px 10px 0 10px;
 }
+
 .track-label{
   display:grid;
   place-items:center;
@@ -196,7 +218,9 @@ body{
   border-radius:12px;
   background: rgba(255,255,255,.04);
   height:56px;
+  user-select:none;
 }
+
 .track{
   position:relative;
   height:56px;
@@ -205,6 +229,17 @@ body{
   background: rgba(255,255,255,.03);
   overflow:hidden;
 }
+
+.track::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    repeating-linear-gradient(90deg, transparent 0, transparent 59px, rgba(255,255,255,.06) 59px, rgba(255,255,255,.06) 60px);
+  opacity:.7;
+  pointer-events:none;
+}
+
 .track.audio{
   height:74px;
   display:flex;
@@ -246,33 +281,41 @@ body{
   top:6px;
   height:44px;
   border-radius:12px;
-  border:1px solid rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.22);
   box-shadow: 0 10px 20px rgba(0,0,0,.25);
   overflow:hidden;
-  cursor:default;
+  cursor:grab;
+  user-select:none;
+  touch-action:none;
 }
+
+.clip:active{ cursor:grabbing; }
+
 .clip .clip-inner{
   height:100%;
-  padding:10px 10px;
+  padding:8px 10px;
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:10px;
 }
+
 .clip .name{
-  font-weight:800;
+  font-weight:900;
   font-size:13px;
   text-shadow: 0 2px 10px rgba(0,0,0,.35);
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
 }
+
 .clip .dur{
   font-variant-numeric: tabular-nums;
   font-size:12px;
-  opacity:.9;
+  opacity:.92;
   white-space:nowrap;
 }
+
 .clip .chip{
   margin-left:10px;
   padding:4px 8px;
@@ -281,6 +324,42 @@ body{
   background: rgba(0,0,0,.18);
   font-size:11px;
 }
+
+.clip::after{
+  /* petite “wave” décorative */
+  content:"";
+  position:absolute;
+  left:0; right:0; bottom:0;
+  height:12px;
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.16) 0, rgba(255,255,255,.16) 6px, transparent 6px, transparent 12px);
+  opacity:.35;
+}
+
+.clip.selected{
+  outline: 2px solid rgba(255,255,255,.75);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.35), 0 16px 30px rgba(0,0,0,.35);
+}
+
+.clip.dragging{
+  opacity:.9;
+  transform: scale(1.01);
+  box-shadow: 0 22px 40px rgba(0,0,0,.45);
+}
+
+.clip .handles{
+  position:absolute;
+  inset:0;
+  display:flex;
+  justify-content:space-between;
+  pointer-events:none;
+}
+.clip .handle{
+  width:10px;
+  background: rgba(255,255,255,.22);
+  opacity:.55;
+}
+.clip:hover .handle{ opacity:.85; }
 
 .playhead{
   position:absolute;
@@ -303,9 +382,8 @@ body{
   background: rgba(255,255,255,.95);
   box-shadow: 0 0 0 1px rgba(0,0,0,.35), 0 0 18px rgba(255,255,255,.28);
 }
-.footer{
-  margin-top:10px;
-}
+
+.footer{ margin-top:10px; }
 .small{ color:var(--muted); font-size:12px; }
 
 @media (max-width: 1050px){
